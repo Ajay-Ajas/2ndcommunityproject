@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Imagix+ Dashboard</title>
+
+<style>
+body{
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background:#f0f0f0;
+}
+
+/* HEADER */
+.header{
+  background:white;
+  height:65px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 20px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.08);
+}
+
+.logo{
+  font-size:22px;
+  font-weight:600;
+}
+.logo span{color:#1e88e5;}
+
+.user-icon{
+  font-size:22px;
+  cursor:pointer;
+}
+
+/* DASHBOARD GRID */
+.dashboard{
+  padding:20px;
+  display:grid;
+  grid-template-columns: repeat(auto-fit,minmax(150px,1fr));
+  gap:15px;
+}
+
+/* CARDS */
+.card{
+  background:white;
+  padding:18px;
+  border-radius:10px;
+  box-shadow:0 6px 18px rgba(0,0,0,0.08);
+  cursor:pointer;
+  transition:0.2s;
+}
+
+.card:hover{
+  transform:translateY(-3px);
+}
+
+.card-title{
+  font-size:14px;
+  color:#666;
+}
+
+.card-value{
+  font-size:22px;
+  margin-top:5px;
+  font-weight:600;
+}
+
+.green{color:#4caf50;}
+.yellow{color:#ff9800;}
+.red{color:#e53935;}
+
+.graph-section{
+  margin:20px;
+  background:white;
+  padding:20px;
+  border-radius:12px;
+  box-shadow:0 6px 18px rgba(0,0,0,0.08);
+}
+
+/* POPUP */
+.popup{
+  position:fixed;
+  top:0; left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.35);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.popup-box{
+  background:white;
+  padding:25px;
+  border-radius:12px;
+  text-align:center;
+  width:280px;
+  animation:fadeIn 0.3s ease;
+}
+
+.popup-box h3{
+  margin-top:0;
+}
+
+.popup-box button{
+  margin-top:15px;
+  padding:10px 25px;
+  border:none;
+  background:#1e88e5;
+  color:white;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+@keyframes fadeIn{
+  from{opacity:0; transform:scale(0.9);}
+  to{opacity:1; transform:scale(1);}
+}
+</style>
+</head>
+<body>
+
+<!-- POPUP -->
+<div class="popup" id="welcomePopup">
+  <div class="popup-box">
+    <h3>System Active</h3>
+    <p>Monitoring is running.<br>
+    Condition: <b class="green">Normal</b></p>
+    <button onclick="closePopup()">OK</button>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">Imagix<span>+</span></div>
+  <div class="user-icon" onclick="location.href='/profile'">👤</div>
+
+</div>
+
+<!-- CARDS -->
+<div class="dashboard">
+
+  <div class="card" onclick="location.href='/devices'">
+    <div class="card-title">Devices</div>
+    <div class="card-value">3 Active</div>
+  </div>
+
+  <div class="card" onclick="location.href='/graph'">
+    <div class="card-title">Graph</div>
+    <div class="card-value">Live</div>
+  </div>
+
+  <div class="card" onclick="location.href='/history-page'">
+    <div class="card-title">History</div>
+    <div class="card-value">Logs</div>
+  </div>
+
+  <div class="card" onclick="location.href='/condition'">
+    <div class="card-title">Condition</div>
+    <div class="card-value green">Normal</div>
+  </div>
+
+  <div class="card" onclick="location.href='/alerts-page'">
+    <div class="card-title">Notifications</div>
+    <div class="card-value">1 Alert</div>
+  </div>
+
+</div>
+
+<!-- LIVE GRAPH -->
+<div class="graph-section">
+  <h3>Live Current Monitoring</h3>
+  <canvas id="liveChart"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+// --------------------------------------------------
+// POPUP ONLY SHOW ONCE
+// --------------------------------------------------
+
+if(!sessionStorage.getItem("popupShown")){
+  document.getElementById("welcomePopup").style.display="flex"
+  sessionStorage.setItem("popupShown",true)
+}else{
+  document.getElementById("welcomePopup").style.display="none"
+}
+
+function closePopup(){
+  document.getElementById("welcomePopup").style.display="none";
+}
+
+
+
+// --------------------------------------------------
+// SYSTEM CHECK
+// --------------------------------------------------
+
+async function systemCheck(){
+
+ try{
+
+   const res = await fetch("/device-status")
+   const data = await res.json()
+
+   if(data.status !== "online"){
+      alert("Device not connected")
+      window.location.href="/"
+      return
+   }
+
+   const setup = await fetch("/get-devices")
+   const setupData = await setup.json()
+
+   if(!setupData.devices || setupData.devices.length === 0){
+      window.location.href="/devices"
+      return
+   }
+
+   // update device count on dashboard
+   const deviceCard = document.querySelector(".card-value")
+   deviceCard.innerText = setupData.devices.length + " Active"
+
+ }catch(err){
+
+   console.log(err)
+   alert("Backend connection failed")
+
+ }
+
+}
+
+systemCheck()
+
+
+
+// --------------------------------------------------
+// GRAPH INITIALIZATION
+// --------------------------------------------------
+
+const ctx = document.getElementById('liveChart').getContext('2d');
+
+const gradient = ctx.createLinearGradient(0,0,0,300);
+gradient.addColorStop(0,"rgba(30,136,229,0.4)");
+gradient.addColorStop(1,"rgba(30,136,229,0)");
+
+const chart = new Chart(ctx, {
+
+  type:'line',
+
+  data:{
+    labels:[],
+    datasets:[{
+      label:'Current (A)',
+      data:[],
+      fill:true,
+      backgroundColor:gradient,
+      borderColor:"#1e88e5",
+      tension:0.4,
+      pointRadius:2
+    }]
+  },
+
+  options:{
+    responsive:true,
+    plugins:{legend:{display:false}},
+    scales:{
+      y:{beginAtZero:true}
+    }
+  }
+
+})
+
+
+
+// --------------------------------------------------
+// REAL TIME DATA LOOP
+// --------------------------------------------------
+
+async function updateGraph(){
+
+ try{
+
+   const res = await fetch("/live-data")
+   const data = await res.json()
+
+   if(data.current){
+
+      const time = new Date().toLocaleTimeString()
+
+      chart.data.labels.push(time)
+      chart.data.datasets[0].data.push(data.current)
+
+      if(chart.data.labels.length > 20){
+        chart.data.labels.shift()
+        chart.data.datasets[0].data.shift()
+      }
+
+      chart.update()
+
+      // update condition card dynamically
+      const conditionCard = document.querySelector(".card:nth-child(4) .card-value")
+
+      if(data.condition === "Normal"){
+         conditionCard.innerText = "Normal"
+         conditionCard.className = "card-value green"
+      }
+
+      if(data.condition === "Warning"){
+         conditionCard.innerText = "Warning"
+         conditionCard.className = "card-value yellow"
+      }
+
+      if(data.condition === "Fault"){
+         conditionCard.innerText = "Fault"
+         conditionCard.className = "card-value red"
+      }
+
+   }
+
+ }catch(err){
+
+   console.log("Graph update error",err)
+
+ }
+
+}
+
+
+// update every 2 seconds
+setInterval(updateGraph,2000)
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeviceCare AI – Login</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+body {
+    min-height: 100vh;
+    background:
+        linear-gradient(120deg, rgba(15,23,42,0.8), rgba(224,242,254,0.6)),
+        url("motherboard-circuit-background.jpg");
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #f8fafc;
+}
+
+/* Login Card */
+.login-card {
+    position: relative;
+    width: 390px;
+    padding: 32px;
+    border-radius: 20px;
+    overflow: hidden;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(56,189,248,0.35);
+    box-shadow: 0 0 45px rgba(56,189,248,0.25);
+    animation: fadeUp 0.8s ease;
+}
+
+/* Blurred image inside card */
+.login-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: url("motherboard-circuit-background.jpg");
+    background-size: cover;
+    background-position: center;
+    filter: blur(10px);
+    opacity: 0.35;
+    z-index: 0;
+}
+
+/* Content above blur */
+.login-content {
+    position: relative;
+    z-index: 2;
+}
+
+/* Animation */
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Title */
+.login-content h2 {
+    text-align: center;
+    color: #38bdf8;
+    margin-bottom: 6px;
+}
+
+.login-content p {
+    text-align: center;
+    font-size: 14px;
+    color: #e0f2fe;
+    margin-bottom: 24px;
+}
+
+/* Inputs */
+.input-group {
+    margin-bottom: 15px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 13px;
+    border-radius: 10px;
+    border: 1px solid rgba(148,163,184,0.4);
+    background: rgba(2,6,23,0.55);
+    color: #f8fafc;
+    font-size: 14px;
+    transition: 0.3s;
+}
+
+.input-group input::placeholder {
+    color: #cbd5f5;
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: #38bdf8;
+    box-shadow: 0 0 12px rgba(56,189,248,0.7);
+}
+
+/* Login Button */
+.login-btn {
+    width: 100%;
+    padding: 13px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(90deg, #38bdf8, #2563eb);
+    color: #020617;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.login-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 25px rgba(56,189,248,0.8);
+}
+
+/* Register */
+.register {
+    text-align: center;
+    margin-top: 14px;
+    font-size: 14px;
+}
+
+.register a {
+    color: #38bdf8;
+    text-decoration: none;
+}
+
+/* Floating Help Icon */
+.help-float {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #38bdf8, #2563eb);
+    color: #020617;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 0 30px rgba(56,189,248,0.9);
+    transition: 0.3s;
+}
+
+.help-float:hover {
+    transform: scale(1.12) rotate(6deg);
+}
+</style>
+</head>
+
+<body>
+
+<div class="login-card">
+    <div class="login-content">
+        <h2>DeviceCare AI</h2>
+        <p>Intelligent Electronic Health Monitor</p>
+
+        <div class="input-group">
+            <input type="text" placeholder="Full Name">
+        </div>
+
+        <div class="input-group">
+            <input type="email" placeholder="Email Address">
+        </div>
+
+        <div class="input-group">
+            <input type="password" placeholder="Password">
+        </div>
+
+        <button class="login-btn">Login</button>
+
+        <div class="register">
+            New user? <a href="#">Create account</a>
+        </div>
+    </div>
+</div>
+
+<div class="help-float" title="Help">?</div>
+
+</body>
+</html>

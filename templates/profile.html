@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile</title>
+
+<style>
+body{margin:0;font-family:Segoe UI;background:#F4F6F8;}
+
+.app-header{
+ position:sticky;
+ top:0;
+ background:#fff;
+ padding:14px 16px;
+ border-bottom:1px solid #ddd;
+ font-weight:600;
+}
+
+.brand span{color:#1E88E5;}
+
+.container{
+ padding:14px;
+}
+
+.card{
+ background:#fff;
+ margin-bottom:12px;
+ padding:14px;
+ border-radius:12px;
+ box-shadow:0 2px 6px rgba(0,0,0,.05);
+}
+
+.title{
+ font-size:13px;
+ color:#777;
+}
+
+.value{
+ font-size:16px;
+ font-weight:600;
+ margin-top:4px;
+}
+
+.green{color:#4CAF50;}
+.red{color:#E53935;}
+
+button{
+ margin-top:12px;
+ padding:10px 16px;
+ border:none;
+ border-radius:6px;
+ background:#1E88E5;
+ color:white;
+ cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app-header">
+  <div class="brand">Imagix<span>+</span></div>
+</div>
+
+<div class="container">
+
+<div class="card">
+<div class="title">Hardware Operator</div>
+<div class="value" id="username">Loading...</div>
+</div>
+
+<div class="card">
+<div class="title">Device Connection</div>
+<div class="value" id="deviceStatus">Checking...</div>
+</div>
+
+<div class="card">
+<div class="title">Monitoring Pipeline</div>
+<div class="value" id="pipelineStatus">Checking...</div>
+</div>
+
+<div class="card">
+<div class="title">System Version</div>
+<div class="value">Imagix AI Monitoring v1.0</div>
+</div>
+
+<button onclick="logout()">Logout</button>
+
+</div>
+
+<script>
+
+// load hardware user
+function loadUser(){
+
+ const name = localStorage.getItem("username") || "Hardware Operator"
+
+ document.getElementById("username").innerText = name
+
+}
+
+
+// check system connection
+async function checkSystem(){
+
+ try{
+
+   const res = await fetch("http://127.0.0.1:5000/device-status")
+   const data = await res.json()
+
+   if(data.status==="online"){
+
+     document.getElementById("deviceStatus").innerText="Device Online"
+     document.getElementById("deviceStatus").classList.add("green")
+
+     document.getElementById("pipelineStatus").innerText="Monitoring Active"
+     document.getElementById("pipelineStatus").classList.add("green")
+
+   }else{
+
+     document.getElementById("deviceStatus").innerText="Device Offline"
+     document.getElementById("deviceStatus").classList.add("red")
+
+   }
+
+ }catch(err){
+
+   document.getElementById("deviceStatus").innerText="Connection Error"
+   document.getElementById("pipelineStatus").innerText="Pipeline Not Running"
+
+ }
+
+}
+
+
+// logout
+function logout(){
+
+ localStorage.removeItem("username")
+
+ window.location.href="login.html"
+
+}
+
+
+// initialize page
+loadUser()
+checkSystem()
+
+</script>
+
+</body>
+</html>

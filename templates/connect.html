@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connect Device - Imagix+</title>
+
+<style>
+body{
+  margin:0;
+  font-family:'Segoe UI', sans-serif;
+  background:#dcdcdc;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+
+.brand{
+  position:fixed;
+  top:15px;
+  left:20px;
+  font-size:22px;
+  font-weight:600;
+}
+
+.brand span{
+  color:#1e88e5;
+}
+
+.card{
+  background:white;
+  padding:35px;
+  border-radius:14px;
+  width:340px;
+  text-align:center;
+  box-shadow:0 12px 28px rgba(0,0,0,0.25);
+  animation:fadeIn 0.6s ease;
+}
+
+@keyframes fadeIn{
+  from{opacity:0; transform:translateY(15px);}
+  to{opacity:1; transform:translateY(0);}
+}
+
+h2{
+  margin-bottom:10px;
+}
+
+p{
+  color:#555;
+  font-size:15px;
+}
+
+input{
+  width:90%;
+  padding:10px;
+  margin-top:15px;
+  border-radius:6px;
+  border:1px solid #ccc;
+}
+
+button{
+  margin-top:20px;
+  padding:12px 30px;
+  border:none;
+  border-radius:8px;
+  background:#1e88e5;
+  color:white;
+  font-size:16px;
+  cursor:pointer;
+}
+
+.spinner{
+  margin-top:15px;
+  display:none;
+}
+
+.loader{
+  border:4px solid #eee;
+  border-top:4px solid #1e88e5;
+  border-radius:50%;
+  width:28px;
+  height:28px;
+  margin:auto;
+  animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+  to{transform:rotate(360deg);}
+}
+</style>
+</head>
+
+<body>
+
+<div class="brand">Imagix<span>+</span></div>
+
+<div class="card">
+
+<h2 id="title">Check Product ID</h2>
+<p id="text">Look at your Imagix board and note the Product ID.</p>
+
+<input id="deviceID" placeholder="Enter Product ID" style="display:none">
+
+<div class="spinner" id="scanArea">
+<div class="loader"></div>
+<p>Scanning... Keep Bluetooth ON & device powered</p>
+</div>
+
+<div id="userArea" style="display:none;">
+<input id="username" placeholder="Create Username"><br>
+<input id="password" type="password" placeholder="Create Password"><br>
+
+<input id="wifiSSID" placeholder="WiFi Name (SSID)"><br>
+<input id="wifiPass" type="password" placeholder="WiFi Password">
+</div>
+
+<button id="nextBtn">Next</button>
+
+</div>
+
+<script>
+
+let step = 0
+
+const title = document.getElementById("title")
+const text = document.getElementById("text")
+const input = document.getElementById("deviceID")
+const scan = document.getElementById("scanArea")
+const userArea = document.getElementById("userArea")
+const nextBtn = document.getElementById("nextBtn")
+
+let bleDevice = null
+let bleServer = null
+let bleService = null
+let bleCharacteristic = null
+
+nextBtn.onclick = async () => {
+
+step++
+
+if(step === 1){
+title.innerText="Power On Device"
+text.innerText="Turn ON power to your Imagix board."
+}
+
+else if(step === 2){
+title.innerText="Enter Product ID"
+text.innerText="Type the ID printed on your device."
+input.style.display="block"
+}
+
+else if(step === 3){
+
+const productID = document.getElementById("deviceID").value
+
+if(productID === ""){
+alert("Please enter the Product ID")
+step--
+return
+}
+
+title.innerText="Searching for Device"
+text.innerText=""
+input.style.display="none"
+scan.style.display="block"
+
+await connectBluetooth(productID)
+
+}
+
+else if(step === 4){
+
+title.innerText="Create User Account"
+text.innerText="Enter login and WiFi details"
+scan.style.display="none"
+userArea.style.display="block"
+
+}
+
+else if(step === 5){
+
+await registerUser()
+await sendWiFiCredentials()
+
+title.innerText="Setup Complete"
+text.innerText="Installation successful. Monitoring ready."
+userArea.style.display="none"
+nextBtn.innerText="Finish"
+
+}
+
+else{
+
+window.location.href="/install"
+
+}
+
+}
+
+
+async function connectBluetooth(productID){
+
+try{
+
+bleDevice = await navigator.bluetooth.requestDevice({
+filters:[{ namePrefix:"IMAGIX" }],
+optionalServices:["1234"]
+})
+
+if(bleDevice.name !== productID){
+alert("Device ID does not match the board.")
+step--
+return
+}
+
+bleServer = await bleDevice.gatt.connect()
+
+bleService = await bleServer.getPrimaryService("1234")
+
+bleCharacteristic = await bleService.getCharacteristic("abcd")
+
+console.log("Connected to", bleDevice.name)
+
+title.innerText="Device Connected ✓"
+text.innerText="Bluetooth pairing successful."
+scan.style.display="none"
+
+}catch(error){
+
+console.log(error)
+alert("Device not found. Make sure Bluetooth is ON and the board is powered.")
+step--
+
+}
+
+}
+
+
+async function registerUser(){
+
+const username = document.getElementById("username").value
+const password = document.getElementById("password").value
+
+if(username === "" || password === ""){
+alert("Please create a username and password")
+return
+}
+
+await fetch("/register-user",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+username:username,
+password:password
+})
+})
+
+}
+
+
+async function sendWiFiCredentials(){
+
+const ssid = document.getElementById("wifiSSID").value
+const pass = document.getElementById("wifiPass").value
+
+if(ssid === "" || pass === ""){
+alert("Please enter WiFi credentials")
+return
+}
+
+const data = ssid + "," + pass
+
+const encoder = new TextEncoder()
+
+await bleCharacteristic.writeValue(encoder.encode(data))
+
+console.log("WiFi credentials sent")
+
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Condition</title>
+
+<style>
+body{margin:0;font-family:Segoe UI;background:#F4F6F8;text-align:center;}
+
+.app-header{
+ position:sticky;
+ top:0;
+ background:#fff;
+ padding:14px 16px;
+ border-bottom:1px solid #ddd;
+ font-weight:600;
+}
+.brand span{color:#1E88E5;}
+
+.status{
+ margin-top:25px;
+ font-size:20px;
+ font-weight:600;
+}
+
+.normal{color:#4CAF50;}
+.warning{color:#FFC107;}
+.fault{color:#E53935;}
+
+.section{
+ background:#fff;
+ margin:12px;
+ padding:14px;
+ border-radius:12px;
+ box-shadow:0 2px 6px rgba(0,0,0,.05);
+ text-align:left;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app-header">
+  <div class="brand">Imagix<span>+</span></div>
+</div>
+
+<div id="overallStatus" class="status normal">NORMAL</div>
+
+<div class="section">
+<b>Leakage Current</b><br>
+<span id="leakage">Checking...</span>
+</div>
+
+<div class="section">
+<b>Overload Risk</b><br>
+<span id="overload">Checking...</span>
+</div>
+
+<div class="section">
+<b>Fire Risk Pattern</b><br>
+<span id="fireRisk">Checking...</span>
+</div>
+
+<div class="section">
+<b>Last 30 Minutes</b><br>
+<span id="history">Monitoring...</span>
+</div>
+
+<script>
+
+// store last 30 minutes of conditions
+let conditionHistory = []
+
+
+// ---------------------------------------
+// UPDATE CONDITION FROM ML BACKEND
+// ---------------------------------------
+
+async function updateCondition(){
+
+ try{
+
+   const res = await fetch("http://127.0.0.1:5000/live-data")
+   const data = await res.json()
+
+   const status = data.condition || "Normal"
+
+   const overall = document.getElementById("overallStatus")
+
+   overall.classList.remove("normal","warning","fault")
+
+   if(status==="Normal"){
+      overall.innerText="NORMAL"
+      overall.classList.add("normal")
+   }
+
+   if(status==="Warning"){
+      overall.innerText="WARNING"
+      overall.classList.add("warning")
+   }
+
+   if(status==="Fault"){
+      overall.innerText="FAULT"
+      overall.classList.add("fault")
+   }
+
+
+   // ---------------------------------------
+   // risk analysis
+   // ---------------------------------------
+
+   document.getElementById("leakage").innerText =
+      status==="Fault" ? "Possible leakage detected" : "Not detected"
+
+   document.getElementById("overload").innerText =
+      data.current > 6 ? "High load detected" : "Within safe limits"
+
+   document.getElementById("fireRisk").innerText =
+      status==="Fault" ? "Abnormal heat pattern detected" : "No abnormal heat pattern detected"
+
+
+   // ---------------------------------------
+   // 30 minute history
+   // ---------------------------------------
+
+   const time = new Date().toLocaleTimeString()
+
+   conditionHistory.push(status)
+
+   if(conditionHistory.length > 10){
+     conditionHistory.shift()
+   }
+
+   document.getElementById("history").innerText =
+      conditionHistory.join(" | ")
+
+ }catch(err){
+
+   console.log("Condition update error",err)
+
+ }
+
+}
+
+
+// ---------------------------------------
+// CHECK EVERY 3 MINUTES
+// ---------------------------------------
+
+setInterval(updateCondition,180000)
+
+
+// first run immediately
+updateCondition()
+
+</script>
+
+</body>
+</html>

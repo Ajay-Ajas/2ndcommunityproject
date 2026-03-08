@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Installation - Imagix+</title>
+
+<style>
+html,body{
+  margin:0;
+  height:100%;
+  font-family:'Segoe UI',sans-serif;
+  background:#e4e4e4;
+  overflow:hidden;
+}
+
+/* HEADER */
+.header{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:60px;
+  background:white;
+  display:flex;
+  align-items:center;
+  padding-left:20px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.08);
+  z-index:1000;
+}
+.header span{
+  font-size:22px;
+  font-weight:600;
+}
+.header span b{ color:#1e88e5; }
+
+/* BODY */
+.app-body{
+  position:absolute;
+  top:60px;
+  bottom:0;
+  width:100%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+/* PANEL */
+.panel{
+  width:90%;
+  max-width:520px;
+  background:white;
+  padding:28px;
+  border-radius:12px;
+  box-shadow:0 12px 30px rgba(0,0,0,0.15);
+}
+
+.title{
+  font-size:20px;
+  font-weight:600;
+  margin-bottom:10px;
+}
+
+.status{
+  padding:12px;
+  border-left:4px solid #ff9800;
+  background:#fff7e6;
+  font-weight:500;
+  margin-top:10px;
+  transition:0.3s;
+}
+
+.status.active{
+  border-left:4px solid #4caf50;
+  background:#e8f5e9;
+}
+
+/* instruction summary */
+.instructions{
+  margin-top:18px;
+  line-height:1.7;
+  color:#444;
+  font-size:15px;
+}
+
+/* safety guide box */
+.guide{
+  display:none;
+  margin-top:18px;
+  background:#f7f7f7;
+  padding:16px;
+  border-radius:8px;
+  line-height:1.6;
+  color:#333;
+  animation:fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn{
+  from{opacity:0; transform:translateY(8px);}
+  to{opacity:1; transform:translateY(0);}
+}
+
+.buttons{
+  margin-top:20px;
+}
+
+button{
+  padding:12px 24px;
+  border:none;
+  border-radius:6px;
+  font-size:15px;
+  cursor:pointer;
+  margin-right:10px;
+}
+
+.primary{
+  background:#1e88e5;
+  color:white;
+}
+
+.secondary{
+  background:#ddd;
+}
+
+/* loader */
+.loader{
+  display:none;
+  margin-top:18px;
+  text-align:center;
+}
+
+.spinner{
+  border:4px solid #eee;
+  border-top:4px solid #1e88e5;
+  border-radius:50%;
+  width:30px;
+  height:30px;
+  margin:auto;
+  animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+  to{transform:rotate(360deg);}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <span>Imagix<b>+</b></span>
+</div>
+
+<!-- BODY -->
+<div class="app-body">
+  <div class="panel">
+
+    <div class="title">Device Installation Required</div>
+
+    <div class="status" id="statusBox">
+      Waiting for device connection to main power line
+    </div>
+
+    <div class="instructions">
+      Ensure the Imagix monitoring unit is correctly installed on your main electrical line before activation.
+    </div>
+
+    <div class="buttons">
+      <button class="secondary" onclick="toggleGuide()">Safety Guide</button>
+      <button class="primary" onclick="activate()">I Have Connected It</button>
+    </div>
+
+    <!-- Detailed Safety Guide -->
+    <div id="guideBox" class="guide">
+      <b>⚠ Installation & Safety Guide</b><br><br>
+
+      <b>Power Safety</b><br>
+      • Turn OFF the main power before installation<br>
+      • Never touch exposed conductors<br>
+      • Use insulated tools if required<br><br>
+
+      <b>Sensor Installation</b><br>
+      • Clamp the CT sensor on the main phase wire only<br>
+      • Do NOT clamp both wires together<br>
+      • Ensure secure attachment & insulation<br><br>
+
+      <b>Device Setup</b><br>
+      • Restore power after installation<br>
+      • Ensure ESP32 device is powered ON<br>
+      • Confirm WiFi connection is active<br><br>
+
+      <b>System Activation</b><br>
+      After installation, press <b>"I Have Connected It"</b>.<br>
+      The system will verify electrical flow and activate monitoring.
+    </div>
+
+    <!-- Activation loader -->
+    <div class="loader" id="loader">
+      <div class="spinner"></div>
+      <p>Checking system status...</p>
+    </div>
+
+  </div>
+</div>
+
+<script>
+
+// show/hide guide
+function toggleGuide(){
+  const guide = document.getElementById("guideBox");
+  guide.style.display = guide.style.display === "block" ? "none" : "block";
+}
+
+
+// --------------------------------------------------
+// INSTALLATION ACTIVATION FLOW
+// --------------------------------------------------
+
+async function activate(){
+
+  const loader = document.getElementById("loader");
+  const status = document.getElementById("statusBox");
+
+  loader.style.display = "block";
+  status.innerText = "Verifying device connection...";
+  status.style.borderLeftColor = "#1e88e5";
+
+  try{
+
+    // STEP 1 → check backend + device status
+    const res = await fetch("http://127.0.0.1:5000/device-status");
+    const data = await res.json();
+
+    if(!data || data.status !== "online"){
+      status.innerText = "Device not detected. Check power.";
+      loader.style.display="none";
+      return;
+    }
+
+    status.innerText = "Device powered ✓   Checking electrical flow...";
+
+
+    // STEP 2 → verify electrical current exists
+    const flow = await fetch("http://127.0.0.1:5000/check-current");
+    const flowData = await flow.json();
+
+    if(!flowData || flowData.current <= 0){
+      status.innerText = "No electrical flow detected.";
+      loader.style.display="none";
+      return;
+    }
+
+    status.innerText = "Electrical flow detected ✓";
+
+
+    // STEP 3 → activate monitoring system
+    await fetch("http://127.0.0.1:5000/start-monitoring");
+
+
+    loader.style.display="none";
+
+    status.classList.add("active");
+    status.innerText = "Monitoring Active ✓   System ready";
+
+
+    // STEP 4 → move to dashboard
+    // STEP 4 → move to dashboard
+setTimeout(()=>{
+  window.location.href = "/dashboard";
+},2000);
+  }
+
+  catch(error){
+
+    loader.style.display="none";
+    status.innerText = "Connection error. Check backend server.";
+
+    console.log("Installation error:", error);
+
+  }
+
+}
+
+</script>
+</body>
+</html>

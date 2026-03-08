@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Devices</title>
+
+<style>
+body{margin:0;font-family:Segoe UI;background:#F4F6F8;}
+
+.app-header{
+ position:sticky;
+ top:0;
+ background:#fff;
+ padding:14px 16px;
+ font-weight:600;
+ border-bottom:1px solid #ddd;
+}
+
+.brand span{color:#1E88E5;}
+
+.container{padding:12px;}
+
+.device{
+ background:#fff;
+ border-radius:12px;
+ padding:14px;
+ margin-bottom:10px;
+ box-shadow:0 2px 6px rgba(0,0,0,.05);
+ cursor:pointer;
+}
+
+.device-top{
+ display:flex;
+ justify-content:space-between;
+}
+
+.details{
+ display:none;
+ margin-top:10px;
+ color:#555;
+ font-size:13px;
+}
+
+.save-btn{
+ margin:12px;
+ padding:10px 16px;
+ border:none;
+ background:#1E88E5;
+ color:white;
+ border-radius:6px;
+ cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app-header">
+  <div class="brand">Imagix<span>+</span></div>
+</div>
+
+<div class="container" id="deviceContainer"></div>
+
+<button class="save-btn" onclick="saveDevices()">Save Devices</button>
+
+
+<script>
+
+let selectedDevices = []
+
+// device counter (allows Fan1 Fan2 Light1 etc.)
+let deviceCount = {}
+
+
+// ----------------------------------------------------
+// LOAD DEVICES FROM DATASET
+// ----------------------------------------------------
+
+async function loadDevices(){
+
+ try{
+
+   const res = await fetch("/device-list")
+   const data = await res.json()
+
+   const container = document.getElementById("deviceContainer")
+
+   container.innerHTML=""
+
+   data.devices.forEach(device => {
+
+      const div = document.createElement("div")
+
+      div.className="device"
+
+      div.innerHTML = `
+        <div class="device-top">
+           <div>${device}</div>
+           <div id="status-${device}">Add</div>
+        </div>
+
+        <div class="details">
+           Tap to add this device (multiple allowed)
+        </div>
+      `
+
+      div.onclick = ()=>toggle(div,device)
+
+      container.appendChild(div)
+
+   })
+
+ }catch(err){
+
+   console.log("Device load error",err)
+
+ }
+
+}
+
+
+
+// ----------------------------------------------------
+// TOGGLE DEVICE ADD
+// ----------------------------------------------------
+
+function toggle(el,device){
+
+ const details = el.querySelector('.details')
+ const status = document.getElementById("status-"+device)
+
+ details.style.display = details.style.display==="block"?"none":"block"
+
+ if(!deviceCount[device]){
+    deviceCount[device] = 0
+ }
+
+ deviceCount[device] += 1
+
+ const deviceID = device + deviceCount[device]
+
+ selectedDevices.push(deviceID)
+
+ status.innerText = "Added (" + deviceCount[device] + ")"
+
+}
+
+
+
+// ----------------------------------------------------
+// SAVE SELECTED DEVICES
+// ----------------------------------------------------
+
+async function saveDevices(){
+
+ if(selectedDevices.length===0){
+   alert("Add at least one device")
+   return
+ }
+
+ try{
+
+   await fetch("/save-devices",{
+
+     method:"POST",
+
+     headers:{
+       "Content-Type":"application/json"
+     },
+
+     body:JSON.stringify({
+       devices:selectedDevices
+     })
+
+   })
+
+   alert("Devices saved successfully")
+
+   // return to dashboard
+   window.location.href="/dashboard"
+
+ }catch(err){
+
+   console.log("Save error",err)
+
+ }
+
+}
+
+
+
+// ----------------------------------------------------
+// UPDATE DEVICE CONDITIONS (ML RESULTS)
+// ----------------------------------------------------
+
+async function updateDeviceConditions(){
+
+ try{
+
+   const res = await fetch("/device-status-list")
+   const data = await res.json()
+
+   data.devices.forEach(dev => {
+
+     const el = document.getElementById("status-"+dev.name)
+
+     if(el){
+        el.innerText = dev.condition
+     }
+
+   })
+
+ }catch(err){
+
+   console.log("Condition update error",err)
+
+ }
+
+}
+
+
+
+// ----------------------------------------------------
+// INITIALIZE PAGE
+// ----------------------------------------------------
+
+loadDevices()
+
+setInterval(updateDeviceConditions,3000)
+
+</script>
+
+</body>
+</html>

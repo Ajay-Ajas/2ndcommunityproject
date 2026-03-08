@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alerts</title>
+
+<style>
+body{margin:0;font-family:Segoe UI;background:#F4F6F8;}
+
+.app-header{
+ position:sticky;
+ top:0;
+ background:#fff;
+ padding:14px 16px;
+ border-bottom:1px solid #ddd;
+ font-weight:600;
+}
+
+.brand span{color:#1E88E5;}
+
+.record{
+ background:#fff;
+ margin:10px;
+ padding:12px;
+ border-radius:10px;
+ box-shadow:0 2px 6px rgba(0,0,0,.05);
+ border-left:4px solid #E53935;
+}
+
+.time{
+ color:#777;
+ font-size:12px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app-header">
+  <div class="brand">Imagix<span>+</span></div>
+</div>
+
+<div id="alertsContainer"></div>
+
+<script>
+
+// load alerts from backend
+async function loadAlerts(){
+
+ try{
+
+   const res = await fetch("http://127.0.0.1:5000/alerts")
+   const data = await res.json()
+
+   const container = document.getElementById("alertsContainer")
+
+   container.innerHTML=""
+
+   if(data.alerts.length === 0){
+
+      container.innerHTML = `
+      <div class="record">
+        No active alerts
+        <div class="time">System running normally</div>
+      </div>
+      `
+      return
+   }
+
+   data.alerts.forEach(alert => {
+
+     const div = document.createElement("div")
+
+     div.className="record"
+
+     div.innerHTML = `
+        ${alert.message}
+        <div class="time">${alert.time}</div>
+     `
+
+     container.appendChild(div)
+
+   })
+
+ }catch(err){
+
+   console.log("Alerts load error",err)
+
+ }
+
+}
+
+
+// refresh every 10 seconds
+setInterval(loadAlerts,10000)
+
+loadAlerts()
+
+</script>
+
+</body>
+</html>

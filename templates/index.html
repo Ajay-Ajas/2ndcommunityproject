@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Imagix+</title>
+
+<!-- PWA (optional) -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1e88e5">
+
+<style>
+body{
+  margin:0;
+  font-family:'Segoe UI', sans-serif;
+  background: linear-gradient(135deg,#f2f2f2,#e6e6e6);
+  overflow:hidden;
+}
+
+/* SPLASH */
+#splash{
+  position:fixed;
+  width:100%;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  transition:opacity 0.8s ease;
+}
+
+/* LOGO */
+.logo{
+  font-size:52px;
+  font-weight:700;
+  opacity:0;
+  transform:scale(0.85);
+  transition:all 1.6s ease;
+  text-shadow:0 0 25px rgba(0,0,0,0.08);
+}
+
+.logo span{
+  color:#1e88e5;
+  text-shadow:0 0 14px rgba(30,136,229,0.5);
+}
+
+/* MOTTO */
+.motto{
+  margin-top:14px;
+  font-size:18px;
+  color:#333;
+  letter-spacing:1px;
+  opacity:0;
+  transform:translateY(20px);
+  transition:all 1.2s ease;
+}
+
+/* POWERED */
+.powered{
+  position:absolute;
+  bottom:38%;
+  font-size:16px;
+  color:#222;
+  opacity:0;
+  text-align:center;
+  letter-spacing:0.5px;
+  transition:opacity 1s ease;
+}
+
+/* BRAND HEADER */
+.corner{
+  position:fixed;
+  top:16px;
+  left:20px;
+  font-size:22px;
+  font-weight:600;
+  display:none;
+  z-index:1000;
+}
+
+/* CONNECT SCREEN */
+#connectScreen{
+  display:none;
+  height:100vh;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+}
+
+.connect-btn{
+  background:#1e88e5;
+  color:white;
+  padding:16px 44px;
+  border:none;
+  border-radius:10px;
+  font-size:18px;
+  cursor:pointer;
+  box-shadow:0 6px 18px rgba(0,0,0,0.15);
+  transition:0.3s;
+}
+
+.connect-btn:hover{
+  transform:scale(1.05);
+}
+
+.connect-text{
+  margin-top:12px;
+  color:#555;
+}
+
+.login{
+  margin-top:25px;
+  color:#444;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<!-- Splash -->
+<div id="splash">
+  <div id="logo" class="logo">Imagix<span>+</span></div>
+  <div id="motto" class="motto">Moving Towards Future</div>
+  <div id="powered" class="powered">
+    AI Powered by AJAS<br>
+    <small>A Quality Friend</small>
+  </div>
+</div>
+
+<!-- Branding -->
+<div id="appBrand" class="corner">
+  Imagix<span style="color:#1e88e5">+</span>
+</div>
+
+<!-- Connect Screen -->
+<div id="connectScreen">
+
+<button class="connect-btn" onclick="location.href='/connect'">
+Connect Device
+</button>
+
+<div class="connect-text">
+Connect your monitoring device to begin
+</div>
+
+<div class="login" onclick="location.href='/login'">
+Login
+</div>
+
+</div>
+
+<script>
+
+const logo = document.getElementById("logo");
+const motto = document.getElementById("motto");
+const powered = document.getElementById("powered");
+const splash = document.getElementById("splash");
+const connect = document.getElementById("connectScreen");
+const brand = document.getElementById("appBrand");
+
+/* Splash animation */
+
+setTimeout(()=>{
+  logo.style.opacity="1";
+  logo.style.transform="scale(1)";
+},500);
+
+setTimeout(()=>{
+  motto.style.opacity="1";
+  motto.style.transform="translateY(0)";
+},1800);
+
+setTimeout(()=>{
+  motto.style.opacity="0.95";
+},3000);
+
+setTimeout(()=>{
+  logo.style.position="fixed";
+  logo.style.top="16px";
+  logo.style.left="20px";
+  logo.style.fontSize="22px";
+  motto.style.opacity="0";
+},4300);
+
+setTimeout(()=>{
+  powered.style.opacity="1";
+},4800);
+
+setTimeout(()=>{
+  splash.style.opacity="0";
+},6500);
+
+setTimeout(()=>{
+  splash.style.display="none";
+  connect.style.display="flex";
+  brand.style.display="block";
+  document.body.style.overflow="auto";
+},7200);
+
+
+/* Optional Service Worker */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(()=>{
+    console.log("Service worker not found (safe to ignore)");
+  });
+}
+
+</script>
+
+</body>
+</html>

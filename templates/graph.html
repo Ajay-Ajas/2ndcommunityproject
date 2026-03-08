@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analytics</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body{margin:0;font-family:Segoe UI;background:#F4F6F8;}
+
+.app-header{
+ position:sticky;
+ top:0;
+ background:#fff;
+ padding:14px 16px;
+ border-bottom:1px solid #ddd;
+ font-weight:600;
+}
+
+.brand span{color:#1E88E5;}
+
+.container{padding:12px;}
+
+.card{
+ background:#fff;
+ padding:16px;
+ border-radius:12px;
+ box-shadow:0 2px 6px rgba(0,0,0,.05);
+}
+</style>
+</head>
+
+<body>
+
+<div class="app-header">
+  <div class="brand">Imagix<span>+</span></div>
+</div>
+
+<div class="container">
+
+<div class="card">
+<canvas id="chart"></canvas>
+</div>
+
+</div>
+
+
+<script>
+
+const ctx = document.getElementById("chart").getContext("2d")
+
+const gradient = ctx.createLinearGradient(0,0,0,300)
+gradient.addColorStop(0,"rgba(30,136,229,0.4)")
+gradient.addColorStop(1,"rgba(30,136,229,0)")
+
+const chart = new Chart(ctx,{
+
+ type:'line',
+
+ data:{
+   labels:[],
+   datasets:[{
+     label:"Current (A)",
+     data:[],
+     borderColor:"#1E88E5",
+     backgroundColor:gradient,
+     borderWidth:2,
+     fill:true,
+     tension:.35,
+     pointRadius:2
+   }]
+ },
+
+ options:{
+   responsive:true,
+   plugins:{legend:{display:false}},
+   scales:{
+     x:{display:true},
+     y:{
+       beginAtZero:true,
+       title:{display:true,text:"Current (A)"}
+     }
+   }
+ }
+
+})
+
+
+// ---------------------------------------------------
+// REAL TIME DATA FROM BACKEND
+// ---------------------------------------------------
+
+async function updateGraph(){
+
+ try{
+
+   const res = await fetch("http://127.0.0.1:5000/live-data")
+   const data = await res.json()
+
+   if(!data.current) return
+
+   const time = new Date().toLocaleTimeString()
+
+   chart.data.labels.push(time)
+   chart.data.datasets[0].data.push(data.current)
+
+   // keep only last 25 readings
+   if(chart.data.labels.length > 25){
+     chart.data.labels.shift()
+     chart.data.datasets[0].data.shift()
+   }
+
+   chart.update()
+
+ }catch(err){
+
+   console.log("Graph update error",err)
+
+ }
+
+}
+
+
+// update every 2 seconds
+setInterval(updateGraph,2000)
+
+</script>
+
+</body>
+</html>
